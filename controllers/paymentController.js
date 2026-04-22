@@ -40,8 +40,16 @@ export const createNowPaymentsInvoice = async (req, res) => {
             status: 'waiting'
         });
     } catch (error) {
-        console.error('NowPayments invoice error:', error);
-        res.status(500).json({ error: error.message || 'Internal server error' });
+        console.error('NowPayments invoice error details:', {
+            message: error.message,
+            stack: error.stack,
+            params: { amount, currency, userId }
+        });
+        res.status(500).json({ 
+            error: error.message.includes('NowPayments API Error') 
+                ? 'Payment provider error: ' + error.message 
+                : 'Failed to create payment invoice' 
+        });
     }
 };
 

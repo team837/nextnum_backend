@@ -2,7 +2,7 @@ const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
 
 export class NowPaymentsService {
     constructor() {
-        this.apiKey = process.env.NowPayments_API_Key || process.env.NOWPAYMENTS_API_KEY || '';
+        this.apiKey = (process.env.NowPayments_API_Key || process.env.NOWPAYMENTS_API_KEY || '').trim();
     }
 
     async createPayment(params) {
