@@ -16,7 +16,9 @@ export const getWallet = async (req, res) => {
             return res.status(404).json({ error: 'Wallet not found' });
         }
 
-        res.json(wallet);
+        const transactions = await Transaction.find({ userId }).sort({ createdAt: -1 });
+
+        res.json({ wallet, transactions });
     } catch (error) {
         console.error('Wallet fetch error:', error);
         res.status(500).json({ error: 'Internal server error' });
