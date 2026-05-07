@@ -18,6 +18,7 @@ import walletRoutes from './routes/wallet.js';
 import smsRoutes from './routes/sms.js';
 import paymentRoutes from './routes/payments.js';
 import bitcoinRoutes from './routes/bitcoin.js';
+import referralRoutes from './routes/referral.js';
 
 // Connect to Database
 connectDB();
@@ -55,6 +56,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/sms', smsRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/bitcoin', bitcoinRoutes);
+app.use('/api/referrals', referralRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Standalone Backend (MVC) running at http://localhost:${PORT}`);

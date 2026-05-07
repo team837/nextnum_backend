@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Wallet from '../models/Wallet.js';
+import Referral from '../models/Referral.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -7,7 +8,7 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
 export const createUser = async (req, res) => {
     try {
-        const { email, password, name } = req.body;
+        const { email, password, name, referredBy } = req.body;
 
         const existingUser = await User.findOne({ email });
 
@@ -20,7 +21,8 @@ export const createUser = async (req, res) => {
         const user = await User.create({
             email,
             password: hashedPassword,
-            name
+            name,
+            referredBy: referredBy || null
         });
 
         // Create wallet for user
@@ -30,13 +32,36 @@ export const createUser = async (req, res) => {
             currency: 'USD'
         });
 
+        // If referredBy exists, create a Referral record and reward the referrer
+        if (referredBy) {
+            try {
+                await Referral.create({
+                    referrerId: referredBy,
+                    referredId: user._id,
+                    status: 'active',
+                    rewardAmount: 2.00
+                });
+
+                // Add reward to referrer's wallet
+                const referrerWallet = await Wallet.findOne({ userId: referredBy });
+                if (referrerWallet) {
+                    referrerWallet.balance += 2.00;
+                    await referrerWallet.save();
+                }
+            } catch (referralError) {
+                console.error('Referral creation error:', referralError);
+                // Don't fail the signup if referral fails
+            }
+        }
+
         const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
         const userResponse = {
             id: user._id,
             email: user.email,
             name: user.name,
-            createdAt: user.createdAt
+            createdAt: user.createdAt,
+            referredBy: user.referredBy
         };
 
         res.json({ user: userResponse, token });
