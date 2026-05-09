@@ -20,10 +20,6 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-// ── Validate required env vars (C3) ─────────────────────────────────────────
-import { validateEnv } from './config/env.js';
-validateEnv();
-
 import connectDB from './config/db.js';
 import userRoutes from './routes/users.js';
 import numberRoutes from './routes/numbers.js';
