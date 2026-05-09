@@ -9,13 +9,20 @@ import User from '../models/User.js';
  * Attaches the authenticated user to req.user (excluding password).
  */
 export const protect = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
+    let token;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Not authorized — no token provided' });
+    // 1. Check Authorization Header (Bearer <token>)
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+    } 
+    // 2. Check HttpOnly Cookie (auth_token)
+    else if (req.cookies && req.cookies.auth_token) {
+        token = req.cookies.auth_token;
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Not authorized — no token provided' });
+    }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET, {
