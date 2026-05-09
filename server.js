@@ -35,6 +35,9 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ── Trust Proxy (H1 - Rate Limiting) ──────────────────────────────────────
+app.set('trust proxy', 1);
+
 // ── Security Headers (H2) ───────────────────────────────────────────────────
 app.use(helmet({
     contentSecurityPolicy: {
