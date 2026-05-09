@@ -14,13 +14,16 @@ import {
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import { validateLogin, validateSignup, validatePasswordUpdate } from '../middleware/validators.js';
+import { loginLimiter, signupLimiter } from '../middleware/rateLimiters.js';
+
 
 const router = Router();
 
 // ── Public routes ────────────────────────────────────────────────────────────
-router.post('/signup', validateSignup, createUser);
-router.post('/login', validateLogin, loginUser);
-router.post('/', validateSignup, createUser);            // Legacy compat
+router.post('/signup', signupLimiter, validateSignup, createUser);
+router.post('/login', loginLimiter, validateLogin, loginUser);
+router.post('/', signupLimiter, validateSignup, createUser);            // Legacy compat
+
 router.post('/refresh', refreshAccessToken);             // Refresh token rotation
 
 // ── Protected routes (require JWT) ───────────────────────────────────────────

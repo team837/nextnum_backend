@@ -7,10 +7,11 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
+import { globalLimiter } from './middleware/rateLimiters.js';
+
 
 // Define __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -103,48 +104,11 @@ app.use((req, res, next) => {
 
 // ── Rate Limiting (H1) ──────────────────────────────────────────────────────
 
-// Global: 100 requests per minute per IP
-const globalLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { error: 'Too many requests — please slow down' },
-});
+// ── Global Rate Limiting (H1) ───────────────────────────────────────────────
 app.use(globalLimiter);
 
-// Auth endpoints: stricter limits
-const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5,
-    message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-const signupLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3,
-    message: { error: 'Too many accounts created. Please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-const paymentLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10,
-    message: { error: 'Too many payment requests. Please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-// Apply route-specific limiters
-app.use('/api/users/login', loginLimiter);
-app.use('/api/users/signup', signupLimiter);
-app.use('/api/users/', signupLimiter); // Legacy signup route
-app.use('/api/payments', paymentLimiter);
-
 // ── Health Check ─────────────────────────────────────────────────────────────
+
 app.get('/health', async (req, res) => {
     const dbOk = mongoose.connection.readyState === 1;
     res.status(dbOk ? 200 : 503).json({
