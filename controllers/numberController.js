@@ -43,10 +43,11 @@ export const purchaseNumber = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { numberId, userId } = req.body;
+        const userId = req.user._id; // From auth middleware
+        const { numberId } = req.body;
 
-        if (!numberId || !userId) {
-            return res.status(400).json({ error: 'Missing numberId or userId' });
+        if (!numberId) {
+            return res.status(400).json({ error: 'Missing numberId' });
         }
 
         const number = await VirtualNumber.findById(numberId).session(session);

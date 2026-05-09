@@ -1,49 +1,83 @@
-# NextNum Backend (MVC Architecture)
+# NextNum Standalone Backend (MVC)
 
-This is the standalone Node.js/Express backend for the NextNum platform. It follows the **Model-View-Controller (MVC)** architectural pattern and uses **Mongoose** (MongoDB) for data persistence.
+This is the core API for the NextNum platform, built with **Node.js** and **Express**. It follows the **Model-View-Controller (MVC)** architectural pattern and uses **Mongoose** (MongoDB) for robust data persistence.
 
-## 🚀 Getting Started
+## 🚀 Key Features
+
+- **MVC Architecture**: Separated concerns for models, controllers, and routes.
+- **NowPayments Integration**: Automated cryptocurrency payment processing (BTC, ETH, USDT, etc.).
+- **Internal Wallet System**: Real-time USD balance management and transaction auditing.
+- **Referral Rewards**: Automatic tracking and distribution of referral bonuses.
+- **JWT Authentication**: Secure, stateless user sessions.
+- **SMS Management**: Integration with virtual number providers for real-time SMS delivery.
+
+## 🏗 Architecture Overview
+
+- **`models/`**: Mongoose schemas for Users, Wallets, Payments, Transactions, and Virtual Numbers.
+- **`controllers/`**: Business logic, including payment verification and referral calculation.
+- **`routes/`**: RESTful API endpoints for all platform services.
+- **`middleware/`**: Authentication protection and request logging.
+- **`services/`**: External API clients (e.g., NowPayments Client).
+
+## 📡 API Endpoints
+
+### 🏥 Health Check
+- `GET /health` - System status and database connectivity.
+
+### 👤 User Management (`/api/users`)
+- `POST /` - Register a new user.
+- `POST /login` - Authenticate and receive JWT.
+- `GET /profile` - Retrieve authenticated user profile (Protected).
+
+### 💳 Payments & Wallet (`/api/payments`, `/api/wallet`)
+- `POST /api/payments/nowpayments/invoice` - Generate a crypto deposit invoice.
+- `POST /api/payments/nowpayments/webhook` - IPN callback for payment confirmation.
+- `GET /api/wallet/balance` - Get current wallet balance.
+- `GET /api/wallet/transactions` - List financial history.
+
+### 📱 Virtual Numbers & SMS (`/api/numbers`, `/api/sms`)
+- `GET /api/numbers` - Browse available virtual numbers.
+- `POST /api/numbers/purchase` - Buy a number using wallet balance.
+- `GET /api/sms` - Retrieve incoming messages for active numbers.
+
+### 🤝 Referrals (`/api/referrals`)
+- `GET /stats` - View referral performance and earnings.
+- `GET /recent` - List recent signups via referral link.
+
+## 🛠 Setup & Configuration
 
 ### 1. Prerequisites
-- Node.js (v18+)
-- MongoDB (Running instance)
+- **Node.js** (v18+)
+- **MongoDB** (Atlas or local instance)
 
-### 2. Setup
-Clone the repository and install dependencies:
+### 2. Installation
 ```bash
 cd backend
 npm install
 ```
 
-### 3. Environment Configuration
-Copy the `.env.example` file and fill in your credentials:
-```bash
-cp .env.example .env
-```
+### 3. Environment Variables
+Create a `.env` file in the `backend/` directory (or use the root `.env`):
 
-| Key | Description |
-|-----|-------------|
-| `DATABASE_URL` | MongoDB Connection String |
-| `PORT` | Backend port (default: 5000) |
-| `NowPayments_API_Key` | API Key from NowPayments dashboard |
-| `NEXTAUTH_SECRET` | Secret used for JWT signing in NextAuth |
+```env
+DATABASE_URL="mongodb+srv://..."
+PORT=5000
+JWT_SECRET="your_secure_jwt_secret"
+NowPayments_API_Key="your_api_key"
+NowPayments_public_key="your_public_key"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_BACKEND_URL="http://localhost:5000"
+```
 
 ### 4. Running the Server
 ```bash
-# Development mode
+# Development mode (auto-reload)
 npm run dev
 
 # Production mode
 npm start
 ```
 
-## 🏗 Architecture
-- **models/**: Mongoose schemas and database models.
-- **controllers/**: Business logic and request handlers.
-- **routes/**: API endpoint definitions.
-- **config/**: Database and service configurations.
-- **services/**: External API integrations (e.g., NowPayments).
+## 📄 License
+Proprietary software. All rights reserved.
 
-## 📡 API Health Check
-You can verify the backend is running by visiting:
-`http://localhost:5000/health`
