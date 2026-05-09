@@ -61,14 +61,14 @@ app.disable('x-powered-by');
 // ── CORS Configuration (H6) ─────────────────────────────────────────────────
 const allowedOrigins = [
     'http://localhost:3000',
-    process.env.FRONTEND_URL, // e.g., https://next.coolyourhome.in
+    process.env.NEXT_PUBLIC_APP_URL, // e.g., https://next.coolyourhome.in
 ].filter(Boolean);
 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl) in development
         if (!origin && process.env.NODE_ENV !== 'production') return callback(null, true);
-        
+
         if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
             callback(null, true);
         } else {
