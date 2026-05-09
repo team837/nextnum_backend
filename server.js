@@ -60,19 +60,15 @@ app.disable('x-powered-by');
 // ── CORS Configuration (H6) ─────────────────────────────────────────────────
 const allowedOrigins = [
     'http://localhost:3000',
-    process.env.NEXT_PUBLIC_APP_URL,
-].filter(Boolean); // Remove falsy values
+    process.env.FRONTEND_URL, // e.g., https://next.coolyourhome.in
+].filter(Boolean);
 
 app.use(cors({
-    origin: function (origin, callback) {
-        // Reject requests with no origin (Postman/curl) in production
-        if (!origin) {
-            if (process.env.NODE_ENV === 'production') {
-                return callback(new Error('CORS: Origin header required'), false);
-            }
-            return callback(null, true); // Allow in development
-        }
-        if (allowedOrigins.includes(origin)) {
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl) in development
+        if (!origin && process.env.NODE_ENV !== 'production') return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
@@ -82,6 +78,9 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', cors());
 
 // ── Body Parsing (H5) ───────────────────────────────────────────────────────
 app.use(express.json({ limit: '10kb' }));   // 10KB body size limit
