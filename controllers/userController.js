@@ -70,7 +70,7 @@ function safeUserResponse(user) {
     };
 }
 
-// ─── Route Handlers ──────────────────────────────────────────────────────────
+// ─── Route Handlers ────────────────────────────────────────────────────────
 
 export const createUser = async (req, res) => {
     try {
@@ -232,6 +232,22 @@ export const logoutUser = async (req, res) => {
         path: '/api/users/refresh',
     });
     res.json({ message: 'Logged out successfully' });
+};
+
+/**
+ * Gets the currently logged-in user's profile.
+ */
+export const getUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ user: safeUserResponse(user) });
+    } catch (error) {
+        console.error('Fetch profile error:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 };
 
 /**

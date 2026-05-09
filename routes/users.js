@@ -7,6 +7,7 @@ import {
     loginUser,
     deleteUser,
     updateProfile,
+    getUserProfile,
     updatePassword,
     refreshAccessToken,
     logoutUser,
@@ -25,6 +26,7 @@ router.post('/refresh', refreshAccessToken);             // Refresh token rotati
 // ── Protected routes (require JWT) ───────────────────────────────────────────
 router.post('/logout', protect, logoutUser);
 router.delete('/', protect, deleteUser);                 // User deletes own account
+router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateProfile);
 router.put('/password', protect, validatePasswordUpdate, updatePassword);
 
