@@ -29,8 +29,8 @@ export const createNowPaymentsInvoice = async (req, res) => {
             order_id: orderId,
             order_description: `Wallet Deposit for User ${userId}`,
             ipn_callback_url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payments/nowpayments/webhook`,
-            success_url: `${appUrl}/dashboard/wallet?status=success`,
-            cancel_url: `${appUrl}/dashboard/wallet?status=cancel`,
+            success_url: `${appUrl}/payment/success`,
+            cancel_url: `${appUrl}/payment/failed`,
         });
 
         await NowPayment.create({
@@ -97,13 +97,24 @@ export const nowPaymentsWebhook = async (req, res) => {
         payment.updatedAt = new Date();
         await payment.save({ session });
 
+        // Handle terminal failed/expired statuses
+        if (['failed', 'expired', 'partially_paid'].includes(payment_status)) {
+            await Transaction.create([{
+                userId: payment.userId,
+                type: 'deposit',
+                amount: payment.priceAmount,
+                currency: payment.priceCurrency,
+                status: 'failed',
+                description: `Crypto deposit ${payment_status} — ID: ${payment_id}`,
+            }], { session });
+        }
+
         // Only credit wallet when payment is confirmed as finished
         if (payment_status === 'finished') {
             await Wallet.findOneAndUpdate(
                 { userId: payment.userId },
                 { $inc: { balance: payment.priceAmount } },
                 { new: true, session }
-                // Removed upsert: true — wallet should already exist from signup
             );
 
             await Transaction.create([{

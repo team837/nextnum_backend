@@ -28,7 +28,7 @@ const nowPaymentSchema = new mongoose.Schema({
   paymentStatus: {
     type: String,
     default: 'waiting',
-    enum: ['waiting', 'confirming', 'confirmed', 'finished', 'failed', 'expired']
+    enum: ['waiting', 'confirming', 'confirmed', 'finished', 'failed', 'expired', 'partially_paid', 'sending', 'refunded']
   },
   invoiceId: {
     type: String
