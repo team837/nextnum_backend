@@ -173,8 +173,8 @@ export const createMaxelPaySession = async (req, res) => {
 
         // The API might return data nested in a 'data' object or directly
         const result = sessionData.data || sessionData;
-        const sessionId = result.sessionId || result.session_id || result.id || result.sessionId;
-        const checkoutUrl = result.sessionUrl || result.session_url || result.url || result.checkout_url || result.checkoutUrl;
+        const sessionId = result.sessionId || result.session_id || result.id;
+        const checkoutUrl = result.paymentUrl || result.payment_url || result.sessionUrl || result.session_url || result.url || result.checkout_url || result.checkoutUrl;
 
         if (!sessionId) {
             console.error('MaxelPay Error: No sessionId returned from API', sessionData);
