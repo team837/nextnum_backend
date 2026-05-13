@@ -93,7 +93,9 @@ app.use(mongoSanitize());
 
 // ── Content-Type Enforcement ─────────────────────────────────────────────────
 app.use((req, res, next) => {
-    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.path !== '/api/payments/nowpayments/webhook') {
+    if (['POST', 'PUT', 'PATCH'].includes(req.method) && 
+        req.path !== '/api/payments/nowpayments/webhook' && 
+        req.path !== '/api/payments/maxelpay/webhook') {
         const ct = req.headers['content-type'];
         if (!ct || !ct.includes('application/json')) {
             return res.status(415).json({ error: 'Content-Type must be application/json' });

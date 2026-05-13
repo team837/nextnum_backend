@@ -33,7 +33,7 @@ function generateTokens(userId) {
  * Sets the access token as an HttpOnly, Secure, SameSite=Strict cookie.
  */
 function setAuthCookie(res, accessToken) {
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
     res.cookie('auth_token', accessToken, {
         httpOnly: true,
         secure: isProd, // Must be true for sameSite: 'none'
@@ -47,7 +47,7 @@ function setAuthCookie(res, accessToken) {
  * Sets the refresh token as an HttpOnly, Secure, SameSite=Strict cookie.
  */
 function setRefreshCookie(res, refreshToken) {
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
     res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: isProd,
