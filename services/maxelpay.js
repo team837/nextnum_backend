@@ -21,6 +21,7 @@ export class MaxelPayService {
 
         if (!response.ok) {
             const error = await response.json();
+            console.error('MaxelPay API Create Session Failed:', JSON.stringify(error));
             throw new Error(`MaxelPay API Error: ${JSON.stringify(error)}`);
         }
 
@@ -41,6 +42,7 @@ export class MaxelPayService {
 
         if (!response.ok) {
             const error = await response.json();
+            console.error('MaxelPay API Get Status Failed:', JSON.stringify(error));
             throw new Error(`MaxelPay API Error: ${JSON.stringify(error)}`);
         }
 

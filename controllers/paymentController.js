@@ -169,21 +169,31 @@ export const createMaxelPaySession = async (req, res) => {
             callbackUrl: `${backendUrl}/api/payments/maxelpay/webhook`,
         });
 
-        // The API returns the session info. We assume it has sessionId and sessionUrl (or similar)
-        // Based on docs, it should return a session object.
+        console.info('MaxelPay Session Response:', JSON.stringify(sessionData));
+
+        // The API might return data nested in a 'data' object or directly
+        const result = sessionData.data || sessionData;
+        const sessionId = result.sessionId || result.session_id || result.id || result.sessionId;
+        const checkoutUrl = result.sessionUrl || result.session_url || result.url || result.checkout_url || result.checkoutUrl;
+
+        if (!sessionId) {
+            console.error('MaxelPay Error: No sessionId returned from API', sessionData);
+            throw new Error('No sessionId returned from payment provider');
+        }
+
         await MaxelPayment.create({
-            sessionId: sessionData.sessionId || sessionData.id,
+            sessionId: sessionId.toString(),
             orderId: orderId,
             userId,
             amount,
             currency,
             status: 'pending',
-            paymentUrl: sessionData.sessionUrl || sessionData.url || sessionData.checkout_url,
+            paymentUrl: checkoutUrl,
         });
 
         res.json({
-            sessionId: sessionData.sessionId || sessionData.id,
-            checkoutUrl: sessionData.sessionUrl || sessionData.url || sessionData.checkout_url,
+            sessionId: sessionId,
+            checkoutUrl: checkoutUrl,
             status: 'pending',
         });
     } catch (error) {
