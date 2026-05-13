@@ -85,6 +85,7 @@ export const validateSignup = (req, res, next) => {
  */
 export const validateDeposit = (req, res, next) => {
     const { amount } = req.body;
+    console.info('validateDeposit Request Body:', JSON.stringify(req.body));
     const num = Number(amount);
 
     if (amount === undefined || amount === null || isNaN(num) || !isFinite(num)) {

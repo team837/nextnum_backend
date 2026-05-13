@@ -150,6 +150,7 @@ export const createMaxelPaySession = async (req, res) => {
     try {
         const userId = req.user._id;
         const { amount, currency = 'USD' } = req.body;
+        console.info('Deposit Request Body:', JSON.stringify(req.body));
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
