@@ -6,6 +6,10 @@ const nowPaymentSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  orderId: {
+    type: String,
+    unique: true
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

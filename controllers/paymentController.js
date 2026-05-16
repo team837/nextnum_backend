@@ -32,12 +32,13 @@ export const createNowPaymentsInvoice = async (req, res) => {
             order_id: orderId,
             order_description: `Wallet Deposit for User ${userId}`,
             ipn_callback_url: `${backendUrl}/api/payments/nowpayments/webhook`,
-            success_url: `${backendUrl}/api/payments/success`,
-            cancel_url: `${backendUrl}/api/payments/failed`,
+            success_url: `https://nextnum-backend.onrender.com/api/payments/success?orderId=${orderId}&gateway=nowpayments`,
+            cancel_url: `https://nextnum-backend.onrender.com/api/payments/failed?orderId=${orderId}&gateway=nowpayments`,
         });
 
         await NowPayment.create({
             paymentId: (invoiceData.id || invoiceData.invoice_id)?.toString(),
+            orderId,
             userId,
             priceAmount: amount,
             priceCurrency: currency,
@@ -166,8 +167,8 @@ export const createMaxelPaySession = async (req, res) => {
             amount: amount,
             currency: currency.toUpperCase(),
             description: `Wallet Deposit for User ${userId}`,
-            successUrl: `${backendUrl}/api/payments/success`,
-            cancelUrl: `${backendUrl}/api/payments/failed`,
+            successUrl: `https://nextnum-backend.onrender.com/api/payments/success?orderId=${orderId}&gateway=maxelpay`,
+            cancelUrl: `https://nextnum-backend.onrender.com/api/payments/failed?orderId=${orderId}&gateway=maxelpay`,
             callbackUrl: `${backendUrl}/api/payments/maxelpay/webhook`,
         });
 
@@ -264,7 +265,7 @@ export const maxelPayWebhook = async (req, res) => {
 
             console.info(`Wallet credited (MaxelPay): user=${payment.userId} amount=${payment.amount} orderId=${data.orderId}`);
         } else if (['failed', 'expired'].includes(data.status)) {
-             await Transaction.create([{
+            await Transaction.create([{
                 userId: payment.userId,
                 type: 'deposit',
                 amount: payment.amount,
@@ -287,18 +288,60 @@ export const maxelPayWebhook = async (req, res) => {
 
 /**
  * GET /api/payments/success
- * Handles redirection to the frontend success page.
+ * Handles redirection to the frontend success page and updates DB.
  */
-export const handlePaymentSuccess = (req, res) => {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    res.redirect(`${appUrl}/payment/success`);
+export const handlePaymentSuccess = async (req, res) => {
+    try {
+        const { orderId, gateway } = req.query;
+        console.info(`Payment success redirect: orderId=${orderId}, gateway=${gateway}`);
+
+        if (orderId && gateway) {
+            if (gateway === 'nowpayments') {
+                await NowPayment.findOneAndUpdate(
+                    { orderId },
+                    { paymentStatus: 'finished' }
+                );
+            } else if (gateway === 'maxelpay') {
+                await MaxelPayment.findOneAndUpdate(
+                    { orderId },
+                    { status: 'paid' }
+                );
+            }
+        }
+    } catch (error) {
+        console.error('Error updating payment on success redirect:', error.message);
+    } finally {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        res.redirect(`${appUrl}/payment/success`);
+    }
 };
 
 /**
  * GET /api/payments/failed
- * Handles redirection to the frontend failure page.
+ * Handles redirection to the frontend failure page and updates DB.
  */
-export const handlePaymentFailed = (req, res) => {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    res.redirect(`${appUrl}/payment/failed`);
+export const handlePaymentFailed = async (req, res) => {
+    try {
+        const { orderId, gateway } = req.query;
+        console.info(`Payment failed redirect: orderId=${orderId}, gateway=${gateway}`);
+
+        if (orderId && gateway) {
+            if (gateway === 'nowpayments') {
+                await NowPayment.findOneAndUpdate(
+                    { orderId },
+                    { paymentStatus: 'failed' }
+                );
+            } else if (gateway === 'maxelpay') {
+                await MaxelPayment.findOneAndUpdate(
+                    { orderId },
+                    { status: 'failed' }
+                );
+            }
+        }
+    } catch (error) {
+        console.error('Error updating payment on failed redirect:', error.message);
+    } finally {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        res.redirect(`${appUrl}/payment/failed`);
+    }
 };
