@@ -18,6 +18,7 @@ export const createNowPaymentsInvoice = async (req, res) => {
         const userId = req.user._id; // From auth middleware — never from body
         const { amount, currency = 'USD' } = req.body;
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
         if (!amount) {
             return res.status(400).json({ error: 'Amount is required' });
@@ -30,9 +31,9 @@ export const createNowPaymentsInvoice = async (req, res) => {
             price_currency: currency.toLowerCase(),
             order_id: orderId,
             order_description: `Wallet Deposit for User ${userId}`,
-            ipn_callback_url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payments/nowpayments/webhook`,
-            success_url: `${appUrl}/payment/success`,
-            cancel_url: `${appUrl}/payment/failed`,
+            ipn_callback_url: `${backendUrl}/api/payments/nowpayments/webhook`,
+            success_url: `${backendUrl}/api/payments/success`,
+            cancel_url: `${backendUrl}/api/payments/failed`,
         });
 
         await NowPayment.create({
@@ -165,8 +166,8 @@ export const createMaxelPaySession = async (req, res) => {
             amount: amount,
             currency: currency.toUpperCase(),
             description: `Wallet Deposit for User ${userId}`,
-            successUrl: `${appUrl}/payment/success`,
-            cancelUrl: `${appUrl}/payment/failed`,
+            successUrl: `${backendUrl}/api/payments/success`,
+            cancelUrl: `${backendUrl}/api/payments/failed`,
             callbackUrl: `${backendUrl}/api/payments/maxelpay/webhook`,
         });
 
@@ -282,4 +283,22 @@ export const maxelPayWebhook = async (req, res) => {
     } finally {
         session.endSession();
     }
+};
+
+/**
+ * GET /api/payments/success
+ * Handles redirection to the frontend success page.
+ */
+export const handlePaymentSuccess = (req, res) => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    res.redirect(`${appUrl}/payment/success`);
+};
+
+/**
+ * GET /api/payments/failed
+ * Handles redirection to the frontend failure page.
+ */
+export const handlePaymentFailed = (req, res) => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    res.redirect(`${appUrl}/payment/failed`);
 };
