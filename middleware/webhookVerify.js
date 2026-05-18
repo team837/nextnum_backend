@@ -20,10 +20,10 @@ function sortObject(obj) {
  * Rejects the request if the signature is missing or invalid.
  */
 export const verifyNowPaymentsIPN = (req, res, next) => {
-    const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET;
+    const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET || process.env.IPN_secret || process.env.IPN_SECRET;
 
     if (!ipnSecret) {
-        console.error('CRITICAL: NOWPAYMENTS_IPN_SECRET is not configured');
+        console.error('CRITICAL: NOWPAYMENTS_IPN_SECRET or IPN_secret is not configured');
         return res.status(500).json({ error: 'Webhook verification not configured' });
     }
 
