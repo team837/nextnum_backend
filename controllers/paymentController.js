@@ -219,13 +219,17 @@ export const maxelPayWebhook = async (req, res) => {
     try {
         const { event, data } = req.body;
 
-        if (!event || !data || !data.orderId) {
+        if (!event || !data || (!data.orderId && !data.sessionId)) {
             await session.abortTransaction();
-            return res.status(400).json({ error: 'Invalid webhook payload' });
+            return res.status(400).json({ error: 'Invalid webhook payload: missing orderId or sessionId' });
         }
 
+        // Query by orderId or sessionId to be highly resilient
         const payment = await MaxelPayment.findOne({
-            orderId: data.orderId,
+            $or: [
+                { orderId: data.orderId },
+                { sessionId: data.sessionId }
+            ]
         }).session(session);
 
         if (!payment) {
@@ -239,15 +243,43 @@ export const maxelPayWebhook = async (req, res) => {
             return res.json({ received: true, message: 'Already processed' });
         }
 
-        // Update payment status
-        payment.status = data.status;
-        payment.txHash = data.txHash;
-        payment.network = data.network;
-        payment.tokenSymbol = data.tokenSymbol;
+        let statusToSet = data.status || payment.status;
+
+        // Process webhook event according to the gateway specification and log details
+        switch (event) {
+            case 'payment.completed':
+                console.log('Payment completed:', data.sessionId);
+                console.log('Amount:', data.amount, data.currency);
+                console.log('Transaction:', data.txHash);
+                statusToSet = 'paid';
+                break;
+
+            case 'payment.failed':
+                console.log('Payment failed:', data.sessionId);
+                statusToSet = 'failed';
+                break;
+
+            case 'payment.expired':
+                console.log('Payment expired:', data.sessionId);
+                statusToSet = 'expired';
+                break;
+
+            default:
+                console.log(`Unhandled MaxelPay webhook event: ${event}`);
+                break;
+        }
+
+        // Update payment fields
+        payment.status = statusToSet;
+        if (data.txHash) payment.txHash = data.txHash;
+        if (data.network) payment.network = data.network;
+        const token = data.token || data.tokenSymbol;
+        if (token) payment.tokenSymbol = token;
+        
         await payment.save({ session });
 
-        // If payment is completed
-        if (event === 'payment.completed' || data.status === 'paid') {
+        // Handle wallet crediting and transaction history
+        if (statusToSet === 'paid') {
             await Wallet.findOneAndUpdate(
                 { userId: payment.userId },
                 { $inc: { balance: payment.amount } },
@@ -260,18 +292,18 @@ export const maxelPayWebhook = async (req, res) => {
                 amount: payment.amount,
                 currency: payment.currency,
                 status: 'completed',
-                description: `Crypto deposit via MaxelPay — Order: ${data.orderId}`,
+                description: `Crypto deposit via MaxelPay — Order: ${payment.orderId}`,
             }], { session });
 
-            console.info(`Wallet credited (MaxelPay): user=${payment.userId} amount=${payment.amount} orderId=${data.orderId}`);
-        } else if (['failed', 'expired'].includes(data.status)) {
+            console.info(`Wallet credited (MaxelPay): user=${payment.userId} amount=${payment.amount} orderId=${payment.orderId}`);
+        } else if (['failed', 'expired'].includes(statusToSet)) {
             await Transaction.create([{
                 userId: payment.userId,
                 type: 'deposit',
                 amount: payment.amount,
                 currency: payment.currency,
                 status: 'failed',
-                description: `MaxelPay deposit ${data.status} — Order: ${data.orderId}`,
+                description: `MaxelPay deposit ${statusToSet} — Order: ${payment.orderId}`,
             }], { session });
         }
 
